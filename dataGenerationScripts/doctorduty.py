@@ -24,14 +24,30 @@ appointment_duration = 1
 # Define doctor IDs
 doctor_ids = range(939, 963)
 
+with open('Doctor_duty.txt', 'w') as f:
+
 # Generate 300 INSERT statements
-for i in range(1, 301):
-    doctor_id = random.choice(doctor_ids)
-    duty_date = start_date + datetime.timedelta(days=random.randint(0, (end_date - start_date).days))
-    start_datetime = datetime.datetime.combine(duty_date, start_time) + datetime.timedelta(hours=i % 8)
-    end_datetime = start_datetime + datetime.timedelta(hours=8)
-    
-    values = (i, doctor_id, duty_date.strftime('%m/%d/%Y'), start_datetime.strftime('%H:%M:%S'), end_datetime.strftime('%H:%M:%S'), appointment_duration, True, True, True, True, True, True, True)
-    
-    print(f"INSERT INTO public.doctorduty(id, doctorId, \"dutyDate\", \"startTime\", \"endTime\", \"appointmentDuration\", slot1, slot2, slot3, slot4, slot5, slot6, slot7) VALUES {values};")
+    for i in range(1, 301):
+        doctor_id = random.choice(doctor_ids)
+        duty_date = start_date + datetime.timedelta(days=random.randint(0, (end_date - start_date).days))
+        start_datetime = datetime.datetime.combine(duty_date, start_time) + datetime.timedelta(hours=i % 8)
+        end_datetime = start_datetime + datetime.timedelta(hours=8)
+        
+        values = (
+            i, 
+            doctor_id, 
+            duty_date.strftime('%m/%d/%Y'), 
+            start_datetime.strftime('%H:%M:%S'), 
+            end_datetime.strftime('%H:%M:%S'), 
+            appointment_duration, 
+            random.choice([True, False]), 
+            random.choice([True, False]), 
+            random.choice([True, False]), 
+            random.choice([True, False]), 
+            random.choice([True, False]), 
+            random.choice([True, False]), 
+            random.choice([True, False])
+        )
+        
+        f.write(f"INSERT INTO public.doctorduty(id, \"doctorId\", \"dutyDate\", \"startTime\", \"endTime\", \"appointmentDuration\", slot1, slot2, slot3, slot4, slot5, slot6, slot7) VALUES {values};\n")
 

@@ -1,0 +1,64 @@
+#1 //Lab service used the patient and their details for a particular appointmnet
+ 
+SELECT lb."TestName" as LabTest,pat.firstname,pat.lastname 
+FROM public.patinetservicelab as psl join public.lab as lb 
+on psl."labId" = lb.id join appointment as app on psl."appointmentsId" = app.id
+join public.patient as pat on app."patientsId" = pat.id 
+where psl."appointmentsId" =1;
+
+
+#2 // to only list the output if the number of medicines for a particular user is more than 2,
+
+
+SELECT usr.username, COUNT(med."medicinename") AS num_medicines
+FROM public.patinetservicemedicine as psm join public.medicine as med 
+on psm."medicineId" = med.id join appointment as app on psm."appointmentsId" = app.id
+join public.patient as pat on app."patientsId" = pat.id join  public.users as usr on
+pat."userId"=usr.id
+GROUP BY usr.username
+HAVING COUNT(med."medicinename") > 2;
+
+#3 //LIST DOWN the lab Test and Medicine used by patient in one appointment
+
+
+SELECT lb."TestName" as Name, 'Lab Test' as Type, app.id as AppointmentID
+FROM public.patinetservicelab as psl 
+JOIN public.lab as lb ON psl."labId" = lb.id 
+JOIN appointment as app ON psl."appointmentsId" = app.id
+JOIN public.patient as pat ON app."patientsId" = pat.id 
+WHERE psl."appointmentsId" < 5
+
+UNION 
+
+SELECT med."medicinename" as Name, 'Medicine' as Type, app.id as AppointmentID
+FROM public.patinetservicemedicine as psm 
+JOIN public.medicine as med ON psm."medicineId" = med.id 
+JOIN appointment as app ON psm."appointmentsId" = app.id
+JOIN public.patient as pat ON app."patientsId" = pat.id 
+JOIN public.users as usr ON pat."userId" = usr.id
+WHERE psm."appointmentsId" < 5
+
+ORDER BY AppointmentID ASC, Type ASC, Name ASC;
+
+#4  // Total bill paid by the insurance compamy to the hospital
+select ins.insurancecompany, COUNT(ins.insurancecompany) as counts,SUM(bill."Amount") as 
+NetPaid from public.billing as bill join insurance as ins 
+on bill."insurancesId" = ins.id 
+GROUP BY ins.insurancecompany
+
+
+#5  Doctor Duty
+SELECT 
+    dd.id as Availableid,
+    dd."doctorId",
+    doc.firstname, 
+    to_char(dd."dutyDate", 'YYYY-MM-DD') as dutyDate,
+    CASE WHEN slot1 THEN 'Not Booked' ELSE 'Booked' END as slot1,
+    CASE WHEN slot2 THEN 'Not Booked' ELSE 'Booked' END as slot2,
+    CASE WHEN slot3 THEN 'Not Booked' ELSE 'Booked' END as slot3,
+    CASE WHEN slot4 THEN 'Not Booked' ELSE 'Booked' END as slot4,
+    CASE WHEN slot5 THEN 'Not Booked' ELSE 'Booked' END as slot5,
+    CASE WHEN slot6 THEN 'Not Booked' ELSE 'Booked' END as slot6,
+    CASE WHEN slot7 THEN 'Not Booked' ELSE 'Booked' END as slot7
+FROM public.doctorduty as dd 
+JOIN public.doctor as doc ON doc."id" = dd."doctorId"

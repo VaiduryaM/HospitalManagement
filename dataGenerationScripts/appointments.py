@@ -75,8 +75,11 @@ for t in range(900):
     data[doctorid]
     medical = medicaldia(data[doctorid])
     ph.append(medical)
-    ph.append(random.choice(blood))
-    ph.append(True)
+    ph.append(random.choice(blood)) 
+    if random.choice([True, False]):
+        ph.append(True)
+    else:
+        ph.append(False)
     ph.append(patientid)
     ph.append(doctorid)
     his.append(ph)
