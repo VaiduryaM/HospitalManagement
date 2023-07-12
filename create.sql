@@ -2,6 +2,11 @@
 -- Please log an issue at https://redmine.postgresql.org/projects/pgadmin4/issues/new if you find any bugs, including reproduction steps.
 ROLLBACK;
 BEGIN;
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+
+
 
 CREATE SEQUENCE IF NOT EXISTS admin_id_seq;
 CREATE TABLE IF NOT EXISTS public.admin
@@ -21,30 +26,21 @@ CREATE TABLE IF NOT EXISTS public.admin
     CONSTRAINT email_a UNIQUE (email)
 );
 
-CREATE SEQUENCE IF NOT EXISTS appointment_id_seq;
-CREATE TABLE IF NOT EXISTS public.appointment
+CREATE SEQUENCE IF NOT EXISTS users_id_seq;
+CREATE TABLE IF NOT EXISTS public.users
 (
-    id integer NOT NULL DEFAULT nextval('appointment_id_seq'::regclass),
+    id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    password character varying COLLATE pg_catalog."default" NOT NULL,
+    username character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    roles text COLLATE pg_catalog."default",
+    "isAccountDisabled" boolean,
+    email character varying(200) COLLATE pg_catalog."default",
     "createdAt" timestamp without time zone DEFAULT now(),
     "updatedAt" timestamp without time zone DEFAULT now(),
-    "BookingFor" timestamp without time zone,
-    slotnumbder integer,
-    "doctorId" integer,
-    "patientsId" integer,
-    CONSTRAINT "PK_e8be1a53027415e709ce8a2db74" PRIMARY KEY (id)
+    CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY (id),
+    CONSTRAINT email_u UNIQUE (email),
+    CONSTRAINT username_u UNIQUE (username)
 );
-
-CREATE SEQUENCE IF NOT EXISTS billingWithAppointments_id_seq;
-CREATE TABLE IF NOT EXISTS public."billingWithAppointments"
-(
-    id integer NOT NULL DEFAULT nextval('billingWithAppointments_id_seq'::regclass),
-    "Amount" integer,
-    "createdAt" timestamp without time zone DEFAULT now(),
-    "patientsId" integer NOT NULL,
-    "appointmentsId" integer NOT NULL,
-    CONSTRAINT "PK_d9043caf3033c11ed3d1b29f73c" PRIMARY KEY (id, "patientsId")
-);
-
 CREATE SEQUENCE IF NOT EXISTS doctor_id_seq;
 CREATE TABLE IF NOT EXISTS public.doctor
 (
@@ -65,33 +61,22 @@ CREATE TABLE IF NOT EXISTS public.doctor
     CONSTRAINT username_d UNIQUE (username)
 );
 
-CREATE SEQUENCE IF NOT EXISTS insurance_id_seq;
-CREATE TABLE IF NOT EXISTS public.insurance
+CREATE SEQUENCE IF NOT EXISTS patienthistory_id_seq;
+
+CREATE TABLE IF NOT EXISTS public.patienthistory
 (
-    id integer NOT NULL DEFAULT nextval('insurance_id_seq'::regclass),
-    policyno integer,
-    insurancecompany character varying COLLATE pg_catalog."default",
+    id integer NOT NULL DEFAULT nextval('patienthistory_id_seq'::regclass),
+    medicaldiagnosis character varying COLLATE pg_catalog."default",
+    bloodgroup character varying COLLATE pg_catalog."default",
+    "isDischarged" boolean,
+    "createdAt" timestamp without time zone DEFAULT now(),
+    "updatedAt" timestamp without time zone DEFAULT now(),
     "patientsId" integer,
-    CONSTRAINT "PK_07152a21fd75ea211dcea53e3c4" PRIMARY KEY (id)
+    "doctorsId" integer,
+    CONSTRAINT "PK_cf752bbce4233a56d0408280061" PRIMARY KEY (id)
 );
-
-CREATE SEQUENCE IF NOT EXISTS lab_id_seq;
-CREATE TABLE IF NOT EXISTS public.lab
-(
-    id integer NOT NULL DEFAULT nextval('lab_id_seq'::regclass),
-    "TestName" character varying COLLATE pg_catalog."default",
-    CONSTRAINT "PK_5575ab9332d71474261beb799a4" PRIMARY KEY (id)
-);
-
-CREATE SEQUENCE IF NOT EXISTS medicine_id_seq;
-CREATE TABLE IF NOT EXISTS public.medicine
-(
-    id integer NOT NULL DEFAULT nextval('medicine_id_seq'::regclass),
-    medicinename character varying COLLATE pg_catalog."default",
-    CONSTRAINT "PK_b9e0e6f37b7cadb5f402390928b" PRIMARY KEY (id)
-);
-
 CREATE SEQUENCE IF NOT EXISTS patient_id_seq;
+
 CREATE TABLE IF NOT EXISTS public.patient
 (
     id integer NOT NULL DEFAULT nextval('patient_id_seq'::regclass),
@@ -109,71 +94,103 @@ CREATE TABLE IF NOT EXISTS public.patient
     CONSTRAINT "PK_8dfa510bb29ad31ab2139fbfb99" PRIMARY KEY (id),
     CONSTRAINT email_p UNIQUE (email)
 );
+CREATE SEQUENCE IF NOT EXISTS insurance_id_seq;
 
-CREATE SEQUENCE IF NOT EXISTS patienthistory_id_seq;
-CREATE TABLE IF NOT EXISTS public.patienthistory
+CREATE TABLE IF NOT EXISTS public.insurance
 (
-    id integer NOT NULL DEFAULT nextval('patienthistory_id_seq'::regclass),
-    medicaldiagnosis character varying COLLATE pg_catalog."default",
-    bloodgroup character varying COLLATE pg_catalog."default",
-    "isDischarged" boolean,
+    id integer NOT NULL DEFAULT nextval('insurance_id_seq'::regclass),
+    policyno integer,
+    insurancecompany character varying COLLATE pg_catalog."default",
+    "patientsId" integer,
+    CONSTRAINT "PK_07152a21fd75ea211dcea53e3c4" PRIMARY KEY (id)
+);
+
+CREATE SEQUENCE IF NOT EXISTS billing_id_seq;
+
+CREATE TABLE IF NOT EXISTS public.billing
+(
+    id integer NOT NULL DEFAULT nextval('billing_id_seq'::regclass),
+    "Amount" integer,
+    "createdAt" timestamp without time zone DEFAULT now(),
+    "appointmentsId" integer,
+    "insurancesId" integer,
+    CONSTRAINT "PK_d9043caf3033c11ed3d1b29f73c" PRIMARY KEY (id)
+);
+
+CREATE SEQUENCE IF NOT EXISTS appointment_id_seq;
+
+CREATE TABLE IF NOT EXISTS public.appointment
+(
+    id integer NOT NULL DEFAULT nextval('appointment_id_seq'::regclass),
     "createdAt" timestamp without time zone DEFAULT now(),
     "updatedAt" timestamp without time zone DEFAULT now(),
+    "BookingFor" timestamp without time zone,
+    slotnumbder integer,
+    "doctorId" integer,
     "patientsId" integer,
-    "doctorsId" integer,
-    CONSTRAINT "PK_cf752bbce4233a56d0408280061" PRIMARY KEY (id)
+    CONSTRAINT "PK_e8be1a53027415e709ce8a2db74" PRIMARY KEY (id)
 );
 
 CREATE SEQUENCE IF NOT EXISTS patinetservicelab_id_seq;
+
 CREATE TABLE IF NOT EXISTS public.patinetservicelab
 (
     id integer NOT NULL DEFAULT nextval('patinetservicelab_id_seq'::regclass),
     medicinename character varying COLLATE pg_catalog."default",
-    "labId" integer,
     "createdAt" timestamp without time zone DEFAULT now(),
     "updatedAt" timestamp without time zone DEFAULT now(),
-    "patientsId" integer,
+    "labId" integer,
+    "appointmentsId" integer,
     CONSTRAINT "PK_62787c9983f7c7f3355082e9d72" PRIMARY KEY (id)
 );
 
+CREATE SEQUENCE IF NOT EXISTS doctorduty_id_seq;
+
+CREATE TABLE IF NOT EXISTS doctorduty
+(
+    id INTEGER NOT NULL DEFAULT nextval('doctorduty_id_seq'::regclass),
+    "doctorId" INTEGER NOT NULL,
+    "dutyDate" DATE NOT NULL,
+    "startTime" TIME NOT NULL,
+    "endTime" TIME NOT NULL,
+    "appointmentDuration" INTEGER NOT NULL,
+    slot1 BOOLEAN NOT NULL,
+    slot2 BOOLEAN NOT NULL,
+    slot3 BOOLEAN NOT NULL,
+    slot4 BOOLEAN NOT NULL,
+    slot5 BOOLEAN NOT NULL,
+    slot6 BOOLEAN NOT NULL,
+    slot7 BOOLEAN NOT NULL,
+    CONSTRAINT "PK_doctorduty_id" PRIMARY KEY (id)
+);
+
+CREATE SEQUENCE IF NOT EXISTS lab_id_seq;
+
+CREATE TABLE IF NOT EXISTS public.lab
+(
+    id integer NOT NULL DEFAULT nextval('lab_id_seq'::regclass),
+    "TestName" character varying COLLATE pg_catalog."default",
+    CONSTRAINT "PK_5575ab9332d71474261beb799a4" PRIMARY KEY (id)
+);
 CREATE SEQUENCE IF NOT EXISTS patinetservicemedicine_id_seq;
+
 CREATE TABLE IF NOT EXISTS public.patinetservicemedicine
 (
     id integer NOT NULL DEFAULT nextval('patinetservicemedicine_id_seq'::regclass),
     "createdAt" timestamp without time zone DEFAULT now(),
     "updatedAt" timestamp without time zone DEFAULT now(),
     "medicineId" integer,
-    "patientsId" integer,
+    "appointmentsId" integer,
     CONSTRAINT "PK_da7dddfa767cc2b8716d25105be" PRIMARY KEY (id)
 );
+CREATE SEQUENCE IF NOT EXISTS medicine_id_seq;
 
-CREATE SEQUENCE IF NOT EXISTS users_id_seq;
-CREATE TABLE IF NOT EXISTS public.users
+CREATE TABLE IF NOT EXISTS public.medicine
 (
-    id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
-    password character varying COLLATE pg_catalog."default" NOT NULL,
-    username character varying(200) COLLATE pg_catalog."default" NOT NULL,
-    roles text COLLATE pg_catalog."default",
-    "isAccountDisabled" boolean,
-    email character varying(200) COLLATE pg_catalog."default",
-    "createdAt" timestamp without time zone DEFAULT now(),
-    "updatedAt" timestamp without time zone DEFAULT now(),
-    CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY (id),
-    CONSTRAINT email_u UNIQUE (email),
-    CONSTRAINT username_u UNIQUE (username)
+    id integer NOT NULL DEFAULT nextval('medicine_id_seq'::regclass),
+    medicinename character varying COLLATE pg_catalog."default",
+    CONSTRAINT "PK_b9e0e6f37b7cadb5f402390928b" PRIMARY KEY (id)
 );
-
-CREATE SEQUENCE IF NOT EXISTS billingWithInsurance_id_seq;
-CREATE TABLE IF NOT EXISTS public."billingWithInsurance"
-(
-    id integer NOT NULL DEFAULT nextval('billingWithInsurance_id_seq'::regclass),
-    "Amount" integer,
-    "createdAt" timestamp without time zone DEFAULT now(),
-    "patientsId" integer NOT NULL,
-    "insuranceId" integer NOT NULL,
-    CONSTRAINT "PK_d9043caf3033c11ed3d1b29f73j" PRIMARY KEY (id, "patientsId")
-);
-
 
 ALTER TABLE IF EXISTS public.admin
     ADD CONSTRAINT "FK_f8a889c4362d78f056960ca6dad" FOREIGN KEY ("userId")
@@ -182,50 +199,8 @@ ALTER TABLE IF EXISTS public.admin
     ON DELETE NO ACTION;
 
 
-ALTER TABLE IF EXISTS public.appointment
-    ADD CONSTRAINT "FK_06d5844328549d9f10541076311" FOREIGN KEY ("patientsId")
-    REFERENCES public.patient (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public.appointment
-    ADD CONSTRAINT "FK_514bcc3fb1b8140f85bf1cde6e2" FOREIGN KEY ("doctorId")
-    REFERENCES public.doctor (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public."billingWithAppointments"
-    ADD CONSTRAINT "FK_f68bd568137fa646a7434d107e5" FOREIGN KEY ("appointmentsId")
-    REFERENCES public.appointment (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public."billingWithAppointments"
-    ADD CONSTRAINT "FK_fc292a5e67f53c6927fd722ced5" FOREIGN KEY ("patientsId")
-    REFERENCES public.patient (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
 ALTER TABLE IF EXISTS public.doctor
     ADD CONSTRAINT "FK_e573a17ab8b6eea2b7fe9905fa8" FOREIGN KEY ("userId")
-    REFERENCES public.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public.insurance
-    ADD CONSTRAINT "FK_edfded2f09a5769f1112e6e8063" FOREIGN KEY ("patientsId")
-    REFERENCES public.patient (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public.patient
-    ADD CONSTRAINT "FK_6636aefca0bdad8933c7cc3e394" FOREIGN KEY ("userId")
     REFERENCES public.users (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
@@ -245,9 +220,51 @@ ALTER TABLE IF EXISTS public.patienthistory
     ON DELETE NO ACTION;
 
 
-ALTER TABLE IF EXISTS public.patinetservicelab
-    ADD CONSTRAINT "FK_05fce13523695f76f99b248a881" FOREIGN KEY ("patientsId")
+ALTER TABLE IF EXISTS public.patient
+    ADD CONSTRAINT "FK_6636aefca0bdad8933c7cc3e394" FOREIGN KEY ("userId")
+    REFERENCES public.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.insurance
+    ADD CONSTRAINT "FK_edfded2f09a5769f1112e6e8063" FOREIGN KEY ("patientsId")
     REFERENCES public.patient (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.billing
+    ADD CONSTRAINT "FK_8f5cd2655e40244988da836db25" FOREIGN KEY ("insurancesId")
+    REFERENCES public.insurance (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.billing
+    ADD CONSTRAINT "FK_f68bd568137fa646a7434d107e5" FOREIGN KEY ("appointmentsId")
+    REFERENCES public.appointment (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.appointment
+    ADD CONSTRAINT "FK_06d5844328549d9f10541076311" FOREIGN KEY ("patientsId")
+    REFERENCES public.patient (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.appointment
+    ADD CONSTRAINT "FK_514bcc3fb1b8140f85bf1cde6e2" FOREIGN KEY ("doctorId")
+    REFERENCES public.doctor (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.patinetservicelab
+    ADD CONSTRAINT "FK_8b5aa3978d76283d9a88adf4b80" FOREIGN KEY ("appointmentsId")
+    REFERENCES public.appointment (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
@@ -267,25 +284,9 @@ ALTER TABLE IF EXISTS public.patinetservicemedicine
 
 
 ALTER TABLE IF EXISTS public.patinetservicemedicine
-    ADD CONSTRAINT "FK_f9c19043c1c237c53d1b73f676d" FOREIGN KEY ("patientsId")
-    REFERENCES public.patient (id) MATCH SIMPLE
+    ADD CONSTRAINT "FK_816d55b7174ab227d7f3b186576" FOREIGN KEY ("appointmentsId")
+    REFERENCES public.appointment (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
-
-
-ALTER TABLE IF EXISTS public."billingWithInsurance"
-    ADD CONSTRAINT insuranceid FOREIGN KEY ("insuranceId")
-    REFERENCES public.insurance (id) MATCH SIMPLE
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public."billingWithInsurance"
-    ADD CONSTRAINT patientid FOREIGN KEY ("patientsId")
-    REFERENCES public.patient (id) MATCH SIMPLE
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-    NOT VALID;
 
 END;
